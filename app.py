@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 # client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", 'Insert you api key here'))
 client = OpenAI(
     api_key=os.environ.get(
-        "OPENAI_API_KEY", "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"
+        "OPENAI_API_KEY", "sk-cy9iR4NOWNrjv5cjQzkjPAn8QDzF"
     )
 )
 
