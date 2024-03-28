@@ -35,19 +35,19 @@
             <!-- Code Editor Toolbar -->
             <div class="bg-white border-b border-gray-300 px-2 py-1 flex justify-between items-center">
                 <div class="flex items-center space-x-1">
-                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="save-code">
+                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="save-code" tabindex="0">
                         <i class="fas fa-save"></i>
                     </button>
-                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="undo-change">
+                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="undo-change" tabindex="0">
                         <i class="fas fa-undo"></i>
                     </button>
-                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="redo-change">
+                    <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="redo-change" tabindex="0">
                         <i class="fas fa-redo"></i>
                     </button>
                 </div>
                 <div class="flex items-center space-x-1">
                     <button class="text-gray-600 hover:bg-gray-100 p-1 rounded interactive" id="generate-model"
-                        data-hover-text="Generate Model here">
+                        tabindex="0" data-hover-text="Generate Model here">
                         <i class="fas fa-cube"></i>
                         Generate Model
                     </button>
@@ -110,11 +110,19 @@
             <!-- Viewport Content -->
             <div class="flex-grow bg-gray-100 overflow-auto flex">
                 <div id="stl_cont" class="w-full h-screen justify-center items-center" style="position: relative;">
-                    <div id="statusDisplay"
-                        class="bg-white border-b border-gray-300 px-2 py-1 flex justify-between items-center"
-                        style="min-height: 40px;">
-                        <i class="fas fa-exclamation-circle"></i>
+                    
+                    <div class="flex items-center" style="min-height: 40px;">
+                        <button id="toggle-control" class="bg-grey-800 hover:bg-grey-900 text-black font-bold py-1 px-3 rounded interactive" data-hover-text="Control Model">
+                            Control Model
+                        </button>
+                        <div id="statusDisplay" class="bg-white border-b border-gray-300 px-2 py-1 flex justify-between items-center" style="min-height: 40px; flex-grow: 1;">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
                     </div>
+                    
+                    
+                    
+                    
                 </div>
             </div>
             <script src="static/stl_viewer/stl_viewer.min.js"></script>
@@ -316,7 +324,9 @@
                 const stlViewerContainer = document.getElementById("stl_cont");
                 const statusDisplay = document.getElementById("statusDisplay");
 
-                stlViewerContainer.addEventListener('click', function (event) {
+                const toggleControlButton = document.getElementById("toggle-control");
+
+                toggleControlButton.addEventListener('click', function () {
                     controlActive = !controlActive;
                     const statusText = 'Control is ' + (controlActive ? 'active' : 'disabled');
                     statusDisplay.textContent = statusText;
@@ -324,20 +334,8 @@
                     const utterance = new SpeechSynthesisUtterance(statusText);
                     utterance.rate = 8;
                     speechSynthesis.speak(utterance);
-
-                    event.stopPropagation();
-                }, true);
-
-
-
-
-
-                document.addEventListener('click', function () {
-                    if (controlActive) {
-                        controlActive = false;
-                        console.log('Model control deactivated.');
-                    }
                 });
+
 
                 document.addEventListener('keydown', function (event) {
                     if (!controlActive) {
