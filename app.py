@@ -16,11 +16,7 @@ from openai import OpenAI  # Import OpenAI library
 logging.basicConfig(level=logging.INFO)
 
 # client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", 'Insert you api key here'))
-client = OpenAI(
-    api_key=os.environ.get(
-        "OPENAI_API_KEY", "sk-cy9iR4NOWNrjv5cjQzkjPAn8QDzF"
-    )
-)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
 
 app = Flask(__name__)
 PORT = int(os.environ.get("PORT", 3000))
@@ -57,18 +53,20 @@ def generate_stl():
 def index():
     return send_from_directory(".", "index.html")
 
-CODE_DIRECTORY = './static/code'
-unnamed_counter = 1 
 
-@app.route('/save-code', methods=['POST'])
+CODE_DIRECTORY = "./static/code"
+unnamed_counter = 1
+
+
+@app.route("/save-code", methods=["POST"])
 def save_code():
     global unnamed_counter
     data = request.json
-    code = data['code']
-    file_name = data.get('fileName')
+    code = data["code"]
+    file_name = data.get("fileName")
 
     if not file_name:
-        file_name = f"unnamed_version{unnamed_counter}.openscad"
+        file_name = f"unnamed_version{unnamed_counter}.scad"
         unnamed_counter += 1
 
     file_path = os.path.join(CODE_DIRECTORY, file_name)
@@ -76,33 +74,34 @@ def save_code():
     os.makedirs(CODE_DIRECTORY, exist_ok=True)
 
     try:
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             file.write(code)
-        return 'File saved'
+        return "File saved"
     except Exception as e:
-        print(f'Error saving file: {e}')
-        return 'Error saving file', 500
+        print(f"Error saving file: {e}")
+        return "Error saving file", 500
 
-@app.route('/get-files', methods=['GET'])
+
+@app.route("/get-files", methods=["GET"])
 def get_files():
     try:
         files = os.listdir(CODE_DIRECTORY)
         return jsonify(files)
     except Exception as e:
-        print(f'Error reading directory: {e}')
-        return 'Error reading directory', 500
+        print(f"Error reading directory: {e}")
+        return "Error reading directory", 500
 
-@app.route('/load-code/<file_name>', methods=['GET'])
+
+@app.route("/load-code/<file_name>", methods=["GET"])
 def load_code(file_name):
     file_path = os.path.join(CODE_DIRECTORY, file_name)
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             code = file.read()
-        return jsonify({'code': code})
+        return jsonify({"code": code})
     except Exception as e:
-        print(f'Error loading file: {file_name}, {e}')
-        return 'Error loading file', 500
-
+        print(f"Error loading file: {file_name}, {e}")
+        return "Error loading file", 500
 
 
 @app.route("/api/describe", methods=["POST"])
@@ -198,9 +197,7 @@ def match():
                     stream=True,
                 )
                 for chunk in response_stream:
-                    item = chunk.choices[
-                        0
-                    ]  
+                    item = chunk.choices[0]
                     logging.info(f"Processing item: {item}")
                     delta = item.delta if item.delta else None
                     if delta and delta.content:

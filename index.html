@@ -47,8 +47,8 @@
                     <button class="text-gray-600 hover:bg-gray-100 p-1 rounded" id="upload-file" tabindex="0">
                         <i class="fas fa-upload"></i>
                     </button>
-                    <input type="file" id="file-input" style="display: none;" accept=".openscad">
-                    <select id="file-list" class="text-gray-600 hover:bg-gray-100 p-1 rounded">
+                    <input type="file" id="file-input" style="display: none;" accept=".scad">
+                    <select id="file-list" class="text-gray-600 hover:bg-gray-100 p-1 rounded" tabindex="0">
                         <option>Select a file</option>
                     </select>
 
@@ -151,7 +151,7 @@
                     { id: "save-code", key: "Ctrl+Shift+S", text: "Save the OpenSCAD code." },
                     { id: "refresh-files", key: "Ctrl+Shift+R", text: "Clear the file list." },
                     { id: "upload-file", key: "Ctrl+Shift+U", text: "Upload a new OpenSCAD file." },
-                    { id: "file-input", key: "Ctrl+Shift+V", text: "Open the version list." },
+                    { id: "file-list", key: "Ctrl+Shift+L", text: "Open the version list." },
                     { id: "generate-model", key: "Ctrl+Shift+G", text: "Generate a 3D model from the code." },
                     { id: "openscad-code", key: "Ctrl+Shift+O", text: "Enter OpenSCAD code here." },
                     { id: "gpt-input", key: "Ctrl+Shift+P", text: "Enter your input here." },
@@ -194,7 +194,7 @@
                 function updateStatusAndSpeak(text) {
                     statusDisplay.textContent = text;
                     const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 3;
+                    utterance.rate = 6;
                     speechSynthesis.speak(utterance);
                 }
 
@@ -392,7 +392,7 @@
 
 
                 function updateStatus() {
-                    const statusText = 'Control is ' + (controlActive ? 'active' : 'disabled');
+                    const statusText = 'Control is ' + (controlActive ? 'active. Clike or enter ESC key to cancel.' : 'disabled');
                     statusDisplay.textContent = statusText;
 
                     const utterance = new SpeechSynthesisUtterance(statusText);
@@ -472,8 +472,8 @@
                     if (fileName.trim() === '') {
                         fileName = undefined;
                     } else {
-                        if (!fileName.endsWith('.openscad')) {
-                            fileName += '.openscad';
+                        if (!fileName.endsWith('.scad')) {
+                            fileName += '.scad';
                         }
                     }
 
