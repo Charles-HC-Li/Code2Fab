@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
@@ -21,6 +20,8 @@
 
         .code2fab-content {
             white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-all;
         }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -132,10 +133,6 @@
                             <i class="fas fa-exclamation-circle"></i>
                         </div>
                     </div>
-
-
-
-
                 </div>
             </div>
             <script src="static/stl_viewer/stl_viewer.min.js"></script>
@@ -146,6 +143,12 @@
                 var zoom_value = 1;
 
                 const statusDisplay = document.getElementById("statusDisplay");
+                function updateStatusAndSpeak(text) {
+                    statusDisplay.textContent = text;
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 6;
+                    speechSynthesis.speak(utterance);
+                }
 
                 const elements = [
                     { id: "save-code", key: "Ctrl+Shift+S", text: "Save the OpenSCAD code." },
@@ -164,14 +167,14 @@
 
 
                 document.addEventListener('keydown', function (event) {
-                    console.log(event.key, event.ctrlKey, event.shiftKey); 
+                    //console.log(event.key, event.ctrlKey, event.shiftKey); 
                     if (event.ctrlKey && event.shiftKey) {
                         elements.forEach(item => {
                             if (event.key.toUpperCase() === item.key.split('+').pop()) {
                                 const element = document.getElementById(item.id);
                                 if (element) {
-                                    element.focus();  
-                                    updateStatusAndSpeak(item.text);  
+                                    element.focus();
+                                    updateStatusAndSpeak(item.text);
                                 }
                             }
                         });
@@ -182,25 +185,18 @@
                     const element = document.getElementById(item.id);
                     if (element) {
                         element.addEventListener('focus', function () {
-                            updateStatusAndSpeak(item.text);  
+                            updateStatusAndSpeak(item.text);
                         });
                         element.addEventListener('mouseenter', function () {
-                            updateStatusAndSpeak(item.text);  
+                            updateStatusAndSpeak(item.text);
                         });
                     }
                 });
 
-
-                function updateStatusAndSpeak(text) {
-                    statusDisplay.textContent = text;
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 6;
-                    speechSynthesis.speak(utterance);
-                }
-
                 document.getElementById('generate-model').addEventListener('click', function () {
                     var code = document.getElementById('openscad-code').value;
                     console.log("Generating STL for code:", code);
+                    updateStatusAndSpeak("Start generating models...");
 
                     fetch('/generate-stl', {
                         method: 'POST',
@@ -220,12 +216,15 @@
                                 stl_viewer.clean()
                                 stl_viewer.add_model({ id: modelIdCounter++, filename: data.stlUrl, color: "#F9D72C", mesh: 100000 });
                                 console.log("Model loaded:", data.stlUrl);
+                                updateStatusAndSpeak("The model has been rendered.");
                             } else {
                                 console.error("STL URL not provided in response.");
+                                updateStatusAndSpeak("Model rendering failed, please check the code or network.");
                             }
                         })
                         .catch(error => {
                             console.error('Error during STL generation or loading:', error);
+                            updateStatusAndSpeak("Model rendering failed: ", error);
                         });
                 });
 
@@ -235,29 +234,42 @@
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
+                    updateStatusAndSpeak("The system reply is loading...")
 
-                    fetch('/api/describe', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text, code: code })
-                    })
-                        .then(response => {
-                            const reader = response.body.getReader();
-                            function processStream({ done, value }) {
-                                if (done) {
-                                    console.log('Stream completed');
-                                    return;
-                                }
-                                const chunk = new TextDecoder().decode(value);
-                                pre.textContent += chunk;
+                    html2canvas(document.getElementById('stl_cont')).then(canvas => {
+                        canvas.toBlob(blob => {
+                            const formData = new FormData();
+                            formData.append('image', blob, 'temp.jpg');
+                            formData.append('text', text);
+                            formData.append('code', code);
 
-                                return reader.read().then(processStream);
-                            }
-                            return reader.read().then(processStream);
-                        })
-                        .catch(error => console.error('Error:', error));
+                            fetch('/api/describe', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => {
+                                    const reader = response.body.getReader();
+                                    function processStream({ done, value }) {
+                                        if (done) {
+                                            console.log('Stream completed');
+                                            updateStatusAndSpeak("Please check the system reply.");
+                                            return;
+                                        }
+                                        const chunk = new TextDecoder().decode(value);
+                                        pre.textContent += chunk;
+
+                                        return reader.read().then(processStream);
+                                    }
+                                    return reader.read().then(processStream);
+                                    updateStatusAndSpeak("Please try again.");
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    updateStatusAndSpeak("Please try again.");
+                                });
+                        });
+                    });
                 });
-
 
                 document.getElementById('match').addEventListener('click', function () {
                     const code = document.getElementById('openscad-code').value;
@@ -265,6 +277,7 @@
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
+                    updateStatusAndSpeak("The system reply is loading...")
 
                     html2canvas(document.getElementById('stl_cont')).then(canvas => {
                         canvas.toBlob(blob => {
@@ -275,13 +288,14 @@
 
                             fetch('/api/match', {
                                 method: 'POST',
-                                body: formData  
+                                body: formData
                             })
                                 .then(response => {
                                     const reader = response.body.getReader();
                                     function processStream({ done, value }) {
                                         if (done) {
                                             console.log('Stream completed');
+                                            updateStatusAndSpeak("Please check the system reply.");
                                             return;
                                         }
                                         const chunk = new TextDecoder().decode(value);
@@ -290,8 +304,12 @@
                                         return reader.read().then(processStream);
                                     }
                                     return reader.read().then(processStream);
+                                    updateStatusAndSpeak("Please try again.");
                                 })
-                                .catch(error => console.error('Error:', error));
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    updateStatusAndSpeak("Please try again.");
+                                });
                         });
                     });
                 });
@@ -302,6 +320,7 @@
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
+                    updateStatusAndSpeak("The system reply is loading...");
 
                     fetch('/api/analysis', {
                         method: 'POST',
@@ -313,6 +332,7 @@
                             function processStream({ done, value }) {
                                 if (done) {
                                     console.log('Stream completed');
+                                    updateStatusAndSpeak("Please check the system reply.");
                                     return;
                                 }
                                 const chunk = new TextDecoder().decode(value);
@@ -322,7 +342,10 @@
                             }
                             return reader.read().then(processStream);
                         })
-                        .catch(error => console.error('Error:', error));
+                        .catch(error => {
+                            console.error('Error:', error);
+                            updateStatusAndSpeak("Please try again.");
+                        });
                 });
 
                 document.getElementById('improve').addEventListener('click', function () {
@@ -330,6 +353,7 @@
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
+                    updateStatusAndSpeak("The system reply is loading...");
 
                     fetch('/api/improve', {
                         method: 'POST',
@@ -341,6 +365,7 @@
                             function processStream({ done, value }) {
                                 if (done) {
                                     console.log('Stream completed');
+                                    updateStatusAndSpeak("Please check the system reply.");
                                     return;
                                 }
                                 const chunk = new TextDecoder().decode(value);
@@ -350,11 +375,11 @@
                             }
                             return reader.read().then(processStream);
                         })
-                        .catch(error => console.error('Error:', error));
+                        .catch(error => {
+                            console.error('Error:', error);
+                            updateStatusAndSpeak("Please try again.");
+                        });
                 });
-
-
-
 
 
                 var stl_viewer = new StlViewer(document.getElementById("stl_cont"), {
@@ -371,7 +396,7 @@
                 });
 
                 document.addEventListener('keydown', function (event) {
-                    if (event.key === "Escape") {  
+                    if (event.key === "Escape") {
                         controlActive = false;
                         updateStatus();
                     }
@@ -390,7 +415,6 @@
                     }
                 });
 
-
                 function updateStatus() {
                     const statusText = 'Control is ' + (controlActive ? 'active. Clike or enter ESC key to cancel.' : 'disabled');
                     statusDisplay.textContent = statusText;
@@ -399,8 +423,6 @@
                     utterance.rate = 8;
                     speechSynthesis.speak(utterance);
                 }
-
-
 
                 document.addEventListener('keydown', function (event) {
                     if (!controlActive) {
@@ -517,8 +539,6 @@
                     }
                 });
 
-
-
                 function loadCode(fileName) {
                     fetch(`/load-code/${fileName}`)
                         .then(response => response.json())
@@ -580,11 +600,7 @@
                             alert('Error loading file list.');
                         });
                 }
-
-                loadFileList(); 
-
+                loadFileList();
             </script>
-
 </body>
-
 </html>
