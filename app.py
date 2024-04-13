@@ -37,7 +37,7 @@ from autogen.agentchat.contrib.multimodal_conversable_agent import (
 
 logging.basicConfig(level=logging.INFO)
 
-api_key = "Insert your API key here"
+api_key = ""
 # client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", 'Insert you api key here'))
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", api_key))
 
@@ -336,9 +336,9 @@ Use the follow format for output:
 @app.route("/api/analysis", methods=["POST"])
 def analysis():
     try:
-        data = request.json
-        text = data["text"]
-        code = data["code"]
+        text = request.form["text"]
+        code = request.form["code"]
+        image = request.files["image"]
         logging.info(f"Received text: {text}")
 
         template = """
@@ -404,9 +404,9 @@ Use the follow format for output:
 @app.route("/api/improve", methods=["POST"])
 def improve():
     try:
-        data = request.json
-        text = data["text"]
-        code = data["code"]
+        text = request.form["text"]
+        code = request.form["code"]
+        image = request.files["image"]
         logging.info(f"Received text: {text}")
 
         template = """

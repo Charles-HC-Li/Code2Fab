@@ -162,7 +162,7 @@
                     { id: "match", key: "Ctrl+Shift+M", text: "Match the model and code." },
                     { id: "analysis", key: "Ctrl+Shift+A", text: "Analyze the code." },
                     { id: "improve", key: "Ctrl+Shift+I", text: "Improve the code." },
-                    { id: "toggle-control", key: "Ctrl+Shift+T", text: "Click to toggle the control state." }
+                    { id: "toggle-control", key: "Ctrl+Shift+T", text: "Click to toggle the control status." }
                 ];
 
 
@@ -316,71 +316,91 @@
 
 
                 document.getElementById('analysis').addEventListener('click', function () {
+                    const code = document.getElementById('openscad-code').value;
                     const text = document.getElementById('gpt-input').value;
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
-                    updateStatusAndSpeak("The system reply is loading...");
+                    updateStatusAndSpeak("The system reply is loading...")
 
-                    fetch('/api/analysis', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text })
-                    })
-                        .then(response => {
-                            const reader = response.body.getReader();
-                            function processStream({ done, value }) {
-                                if (done) {
-                                    console.log('Stream completed');
-                                    updateStatusAndSpeak("Please check the system reply.");
-                                    return;
-                                }
-                                const chunk = new TextDecoder().decode(value);
-                                pre.textContent += chunk;
+                    html2canvas(document.getElementById('stl_cont')).then(canvas => {
+                        canvas.toBlob(blob => {
+                            const formData = new FormData();
+                            formData.append('image', blob, 'temp.jpg');
+                            formData.append('text', text);
+                            formData.append('code', code);
 
-                                return reader.read().then(processStream);
-                            }
-                            return reader.read().then(processStream);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            updateStatusAndSpeak("Please try again.");
+                            fetch('/api/analysis', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => {
+                                    const reader = response.body.getReader();
+                                    function processStream({ done, value }) {
+                                        if (done) {
+                                            console.log('Stream completed');
+                                            updateStatusAndSpeak("Please check the system reply.");
+                                            return;
+                                        }
+                                        const chunk = new TextDecoder().decode(value);
+                                        pre.textContent += chunk;
+
+                                        return reader.read().then(processStream);
+                                    }
+                                    return reader.read().then(processStream);
+                                    updateStatusAndSpeak("Please try again.");
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    updateStatusAndSpeak("Please try again.");
+                                });
                         });
+                    });
                 });
+
 
                 document.getElementById('improve').addEventListener('click', function () {
+                    const code = document.getElementById('openscad-code').value;
                     const text = document.getElementById('gpt-input').value;
                     const responseContainer = document.getElementById('code2fab-response');
                     responseContainer.innerHTML = '<pre></pre>';
                     const pre = responseContainer.querySelector('pre');
-                    updateStatusAndSpeak("The system reply is loading...");
+                    updateStatusAndSpeak("The system reply is loading...")
 
-                    fetch('/api/improve', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text })
-                    })
-                        .then(response => {
-                            const reader = response.body.getReader();
-                            function processStream({ done, value }) {
-                                if (done) {
-                                    console.log('Stream completed');
-                                    updateStatusAndSpeak("Please check the system reply.");
-                                    return;
-                                }
-                                const chunk = new TextDecoder().decode(value);
-                                pre.textContent += chunk;
+                    html2canvas(document.getElementById('stl_cont')).then(canvas => {
+                        canvas.toBlob(blob => {
+                            const formData = new FormData();
+                            formData.append('image', blob, 'temp.jpg');
+                            formData.append('text', text);
+                            formData.append('code', code);
 
-                                return reader.read().then(processStream);
-                            }
-                            return reader.read().then(processStream);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            updateStatusAndSpeak("Please try again.");
+                            fetch('/api/improve', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => {
+                                    const reader = response.body.getReader();
+                                    function processStream({ done, value }) {
+                                        if (done) {
+                                            console.log('Stream completed');
+                                            updateStatusAndSpeak("Please check the system reply.");
+                                            return;
+                                        }
+                                        const chunk = new TextDecoder().decode(value);
+                                        pre.textContent += chunk;
+
+                                        return reader.read().then(processStream);
+                                    }
+                                    return reader.read().then(processStream);
+                                    updateStatusAndSpeak("Please try again.");
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    updateStatusAndSpeak("Please try again.");
+                                });
                         });
+                    });
                 });
-
 
                 var stl_viewer = new StlViewer(document.getElementById("stl_cont"), {
                     models: [{ filename: "/static/models/bg.stl", color: "#F9D72C", mesh: 1000, display: "flat" }],
